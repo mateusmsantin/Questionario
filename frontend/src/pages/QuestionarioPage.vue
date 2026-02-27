@@ -23,8 +23,15 @@
           />
         </div>
 
-        <q-input v-model="email" label="E-mail" outlined dense class="q-mt-md" />
+        <q-input v-model="email" label="E-mail" outlined dense class="q-mt-md"
 
+          type="email"
+          :rules="[
+            val => !!val || 'E-mail é obrigatório',
+            val => /.+@.+\..+/.test(val) || 'Digite um e-mail válido'
+          ]"
+          lazy-rules
+        />
         <q-input
           v-model="password"
           label="Senha"
@@ -132,7 +139,7 @@
           <div class="row justify-between q-pa-md">
             <q-btn flat label="Anterior" @click="tabIndex--" :disabled="tabIndex === 0" />
             <q-btn v-if="index < abas.length - 1" color="primary" label="Próxima" :disabled="!abaCompleta(index)" @click="tabIndex++" />
-            <q-btn v-else color="positive" label="Finalizar e Enviar" icon="send" :disabled="!abaCompleta(index)" @click="enviarRespostas" />
+            <q-btn v-else color="positive" label="Finalizar e Enviar" icon="send" :disabled="!questionarioTodoCompleto()" @click="enviarRespostas" />
           </div>
         </q-tab-panel>
       </q-tab-panels>
@@ -182,7 +189,11 @@ const ageOptions = [
 ]
 const genderOptions = [
   { label: 'Mulher cis', value: 'MC' }, { label: 'Homem cis', value: 'HC' },
-  { label: 'Trans', value: 'TR' }, { label: 'Não binário', value: 'NB' }, { label: 'Outro', value: 'OUT' }
+  { label: 'Trans', value: 'TR' }, { label: 'Não binário', value: 'NB' }, { label: 'Outro', value: 'OUT' },
+  { label: 'Mulher Trans', value: 'MT' }, { label: 'Homem HT', value: 'HT' }
+
+
+
 ]
 const raceOptions = [
   { label: 'Indígena', value: 'IND' }, { label: 'Preto(a)', value: 'AFR' },
@@ -195,16 +206,21 @@ const orgTypeOptions = [
 
 const loginUser = async () => {
   try {
+    // LIMPEZA: Remove qualquer token antigo antes de tentar um novo login
+    localStorage.removeItem('access_token')
+    delete api.defaults.headers.common['Authorization']
+
     const res = await api.post('/login-or-register/', {
       email: email.value,
       password: password.value
     })
 
-    localStorage.setItem('access_token', res.data.access)
-    api.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`
+    // Se o Django retornou sucesso, aí sim guardamos o novo
+    const token = res.data.access
+    localStorage.setItem('access_token', token)
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
 
     user.value = email.value
-    // INJETA O EMAIL ATUAL NO FORMULÁRIO DE PERFIL
     profileData.email_contato = email.value
 
     await carregarProfile()
@@ -213,6 +229,7 @@ const loginUser = async () => {
     $q.notify({ color: 'negative', message: msg })
   }
 }
+
 
 const carregarProfile = async () => {
   try {
@@ -361,6 +378,7 @@ const logout = () => {
   // 4. Limpa as credenciais de login
   email.value = ''
   password.value = ''
+  confirmPassword.value = ''
   errosServidor.value = {}
 
   $q.notify({ message: 'Sessão encerrada', color: 'info', icon: 'logout' })
@@ -380,6 +398,14 @@ const modoRegistro = ref(false) // Controla se mostra o campo de confirmar senha
 const confirmPassword = ref('') // Armazena a segunda senha
 
 const validarAcaoLogin = () => {
+  // Regex simples para validar formato de e-mail
+  const emailPattern = /.+@.+\..+/;
+
+  if (!email.value || !emailPattern.test(email.value)) {
+    $q.notify({ color: 'negative', message: 'Por favor, insira um e-mail válido.' })
+    return
+  }
+
   if (modoRegistro.value) {
     if (password.value !== confirmPassword.value) {
       $q.notify({ color: 'negative', message: 'As senhas precisam ser iguais!' })
@@ -391,8 +417,14 @@ const validarAcaoLogin = () => {
     }
   }
 
-  // Se passou nas validações, chama a função que você já tem
+  // Se passou em tudo, chama o login/registro
   loginUser()
+}
+
+
+const questionarioTodoCompleto = () => {
+  // Percorre todas as abas e verifica se cada uma está completa
+  return abas.value.every((aba, index) => abaCompleta(index))
 }
 
 </script>
