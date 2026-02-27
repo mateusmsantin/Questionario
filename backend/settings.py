@@ -106,7 +106,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # backend/settings.py
 
 DATABASES = {
-    'default': env.db()
+    'default': env.db(),  # pega DATABASE_URL automaticamente
 }
 
 # Adicione isso no final do arquivo para o login por e-mail funcionar
@@ -148,6 +148,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 
 CORS_ALLOW_ALL_ORIGINS = True
 
