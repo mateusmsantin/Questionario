@@ -173,3 +173,9 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1), # Aumente para facilitar testes
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
+USE_X_FORWARDED_HOST = True
