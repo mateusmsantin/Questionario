@@ -4,7 +4,7 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
     children: [
       { path: '', component: () => import('pages/IndexPage.vue') },
-      { path: 'cadastro-perfil', component: () => import('pages/ProfilePage.vue') },
+      //{ path: 'cadastro-perfil', component: () => import('pages/ProfilePage.vue') },
       { path: 'questionario', component: () => import('pages/QuestionarioPage.vue') }
     ]
   },
