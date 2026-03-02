@@ -188,9 +188,10 @@ const ageOptions = [
   { label: '51 a 60', value: '51_60' }, { label: '60+', value: '60+' }
 ]
 const genderOptions = [
-  { label: 'Mulher cis', value: 'MC' }, { label: 'Homem cis', value: 'HC' },
-  { label: 'Trans', value: 'TR' }, { label: 'Não binário', value: 'NB' }, { label: 'Outro', value: 'OUT' },
-  { label: 'Mulher Trans', value: 'MT' }, { label: 'Homem HT', value: 'HT' }
+  { label: 'Mulher cisgênero', value: 'MC' }, { label: 'Homem cisgênero', value: 'HC' },
+  { label: 'Mulher transgênero', value: 'MT' }, { label: 'Homem transgênero', value: 'HT' },
+  { label: 'Pessoa não binária', value: 'NB' }, { label: 'Outro', value: 'OUT' },
+  { label: 'Prefiro não responder', value: 'PNR' }
 
 
 
@@ -200,8 +201,9 @@ const raceOptions = [
   { label: 'Branca', value: 'BRA' }, { label: 'Parda', value: 'PAR' }, { label: 'Asiática', value: 'ASI' }
 ]
 const orgTypeOptions = [
-  { label: 'ONG/Coletivo', value: 'SOC' }, { label: 'Indivíduo', value: 'IND' },
-  { label: 'Governo', value: 'GOV' }, { label: 'Educação', value: 'EDU' }, { label: 'Privado', value: 'PRI' }
+  { label: 'Sociedade civil organizada (ONGs, coletivos, grupos de bairro)', value: 'SOC' }, { label: 'Indivíduo', value: 'IND' },
+  { label: 'Instituição governamental', value: 'GOV' }, { label: 'Centro educacional ou de pesquisa', value: 'EDU' }, { label: 'Setor produtivo ou privado', value: 'PRI' },
+  { label: 'Outro', value: 'OUT' }
 ]
 
 const loginUser = async () => {
