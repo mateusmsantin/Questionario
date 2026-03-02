@@ -1,0 +1,163 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+    .kpi-card {
+        width: 200px;
+        background: #f2f2f2;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .chart-container {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+    }
+    .button-download {
+        padding: 10px 20px;
+        background: #28a745;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: bold;
+        display: inline-block;
+    }
+    .button-download:hover { background: #218838; color: white; }
+</style>
+
+<h1>Dashboard BI - Questionário Lagoa Mirim</h1>
+
+<div style="margin-bottom:30px; display:flex; gap:10px;">
+    <a href="/analytics/export/" class="button-download">📥 Baixar CSV de Respostas</a>
+</div>
+
+<div style="display:flex; gap:20px; margin-bottom:30px;">
+    <div class="kpi-card">
+        <h3 style="margin:0; font-size:14px; color:#666;">Score Geral Médio</h3>
+        <p id="score-geral" style="font-size:32px; font-weight:bold; margin:10px 0; color:#2c3e50;">...</p>
+    </div>
+</div>
+
+<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap:20px; margin-bottom:30px;">
+    <div class="chart-container">
+        <canvas id="chart-genero" height="250"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="chart-idade" height="250"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="chart-aba" height="250"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="chart-distribuicao" height="250"></canvas>
+    </div>
+</div>
+
+<div class="chart-container" style="margin-bottom:30px;">
+    <h2>Distribuição de Pesos por Pergunta</h2>
+    <div style="height: 500px; overflow-x: auto;">
+        <canvas id="chart-pergunta-unico" width="1200" height="450"></canvas>
+    </div>
+</div>
+
+<div class="chart-container">
+    <h2>Ranking de Médias (Menor para Maior)</h2>
+    <p style="color: #666; font-size: 0.9em;">Perguntas com menor média indicam áreas de maior vulnerabilidade ou menor satisfação.</p>
+    <div style="height: 1200px; position: relative;">
+        <canvas id="chart-ranking-perguntas"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+/* --- Configuração Global --- */
+Chart.defaults.font.family = 'Roboto, Arial, sans-serif';
+
+/* --- Helpers --- */
+const plotBar = (id, labels, data, title, color) => {
+    new Chart(document.getElementById(id), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: title, data, backgroundColor: color }] },
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+};
+
+/* 1. DADOS RESUMO (KPI, Gênero, Idade, Abas) */
+fetch("/analytics/stats/")
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("score-geral").innerText = parseFloat(data.score_geral.media || 0).toFixed(2);
+
+        plotBar('chart-genero', data.media_genero.map(e => e.user__profile__genero || 'N/I'), data.media_genero.map(e => e.media), 'Média por Gênero', '#3498db');
+        plotBar('chart-idade', data.media_idade.map(e => e.user__profile__faixa_etaria || 'N/I'), data.media_idade.map(e => e.media), 'Média por Idade', '#e67e22');
+        plotBar('chart-aba', data.media_por_aba.map(e => e.pergunta__aba__nome), data.media_por_aba.map(e => e.media), 'Média por Dimensão', '#1abc9c');
+        plotBar('chart-distribuicao', data.distribuicao.map(e => `Peso ${e.peso}`), data.distribuicao.map(e => e.total), 'Total de Respostas', '#9b59b6');
+    });
+
+/* 2. DISTRIBUIÇÃO DETALHADA EMPILHADA */
+fetch("/analytics/detalhado/")
+    .then(res => res.json())
+    .then(data => {
+        const labels = data.map(p => p.pergunta.substring(0, 40) + '...');
+        const datasets = [1,2,3,4,5].map(peso => ({
+            label: 'Peso ' + peso,
+            data: data.map(p => {
+                const item = p.distribuicao.find(d => d.peso === peso);
+                return item ? item.total : 0;
+            }),
+            backgroundColor: ['#ff4d4d','#ffa64d','#ffff4d','#80ff4d','#4dff4d'][peso-1]
+        }));
+
+        new Chart(document.getElementById('chart-pergunta-unico'), {
+            type: 'bar',
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+            }
+        });
+    });
+
+/* 3. RANKING DE PERGUNTAS (HORIZONTAL) */
+fetch("/analytics/stats-por-pergunta/")
+    .then(res => res.json())
+    .then(data => {
+        console.log("Dados do Ranking:", data); // Debug no console
+        const ctx = document.getElementById('chart-ranking-perguntas').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.pergunta__texto.length > 70 ? d.pergunta__texto.substring(0, 70) + '...' : d.pergunta__texto),
+                datasets: [{
+                    label: 'Média de Peso',
+                    data: data.map(d => parseFloat(d.media_peso || 0).toFixed(2)),
+                    backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                    borderColor: '#2980b9',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { beginAtZero: true, max: 5 },
+                    y: { ticks: { font: { size: 11 }, autoSkip: false } }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    })
+    .catch(err => console.error("Erro no fetch do ranking:", err));
+
+</script>
+{% endblock %}

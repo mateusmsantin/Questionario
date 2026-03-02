@@ -60,6 +60,7 @@ INSTALLED_APPS = [
 
     # Seus apps
     'questionario',
+    'analytics.apps.AnalyticsConfig',
 ]
 
 
