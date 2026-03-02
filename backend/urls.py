@@ -6,8 +6,8 @@ from analytics.admin import admin_site # <--- Importe o site personalizado
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('admin/', admin_site.urls), # <--- USE O SEU SITE AQUI
+    #path('admin/', admin_site.urls), # <--- USE O SEU SITE AQUI
     path('api/', include('questionario.urls')),  # 🔥 TODAS as rotas da API ficam aqui
     path('analytics/', include('analytics.urls')), # API JSON
-    path('bi-dashboard/', bi_dashboard, name='bi-dashboard'), # Dashboard Admin
+    #path('bi-dashboard/', bi_dashboard, name='bi-dashboard'), # Dashboard Admin
     ]
