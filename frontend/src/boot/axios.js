@@ -1,12 +1,10 @@
 import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 
-//const api = axios.create({
-//  baseURL: 'http://127.0.0.1:8000/api',
-//})
 
 const api = axios.create({
-  baseURL: process.env.API_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/',
+  withCredentials: true
 })
 
 // Interceptor para garantir que o token seja pego do localStorage EM CADA requisição
