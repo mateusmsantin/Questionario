@@ -36,29 +36,28 @@ class ProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-# 3. Listar as 7 Abas e suas Perguntas
-#class AbaListView(generics.ListAPIView):
-#    queryset = Aba.objects.all().order_by('ordem')
-#    serializer_class = AbaSerializer
-#    permission_classes = [permissions.IsAuthenticated]
-    #permission_classes = [permissions.AllowAny]
-
-
 
 class AbaListView(APIView):
-    def get(self, request):
-        # Verifica se o usuário logado já tem alguma resposta salva
-        ja_respondeu = Resposta.objects.filter(user=request.user).exists()
-        
-        if ja_respondeu:
-            # Retorna um sinalizador para o frontend
-            return Response({"ja_respondido": True}, status=200)
-            
-        # Caso contrário, retorna as abas normalmente
-        abas = Aba.objects.all()
-        serializer = AbaSerializer(abas, many=True)
-        return Response(serializer.data)
+    permission_classes = [permissions.AllowAny]
 
+    def get(self, request):
+
+        # Se usuário não estiver autenticado
+        if not request.user.is_authenticated:
+            abas = Aba.objects.all().order_by('ordem')
+            serializer = AbaSerializer(abas, many=True)
+            return Response(serializer.data)
+
+        # Usuário autenticado
+        ja_respondeu = Resposta.objects.filter(user=request.user).exists()
+
+        if ja_respondeu:
+            return Response({"ja_respondido": True}, status=200)
+
+        abas = Aba.objects.all().order_by('ordem')
+        serializer = AbaSerializer(abas, many=True)
+
+        return Response(serializer.data)
 
 # 4. Salvar múltiplas respostas de uma vez
 class SubmitRespostasView(APIView):
