@@ -27,17 +27,25 @@ class ProfileView(APIView):
             return Response({"detail": "Não encontrado"}, status=404)
 
     def post(self, request):
-        # Tenta atualizar se já existir, ou cria se não existir
+
         print("REQUEST.DATA:", request.data)
 
-        profile, created = Profile.objects.get_or_create(user=request.user)
-        serializer = ProfileSerializer(profile, data=request.data, partial=True)
-        
+        try:
+            profile = Profile.objects.get(user=request.user)
+            serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        except Profile.DoesNotExist:
+            serializer = ProfileSerializer(data=request.data)
+
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+            try:
+                serializer.save(user=request.user)
+                return Response(serializer.data, status=201)
+            except Exception as e:
+                print("ERRO AO SALVAR PROFILE:", str(e))
+                raise e
+
+        print("ERRO SERIALIZER:", serializer.errors)
+        return Response(serializer.errors, status=400)
 
 class AbaListView(APIView):
     permission_classes = [permissions.AllowAny]
