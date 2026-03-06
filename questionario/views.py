@@ -28,6 +28,8 @@ class ProfileView(APIView):
 
     def post(self, request):
         # Tenta atualizar se já existir, ou cria se não existir
+        print("REQUEST.DATA:", request.data)
+
         profile, created = Profile.objects.get_or_create(user=request.user)
         serializer = ProfileSerializer(profile, data=request.data, partial=True)
         
